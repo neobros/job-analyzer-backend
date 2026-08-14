@@ -18,7 +18,7 @@ const router = express.Router();
 
 router.post('/signup', async (req, res, next) => {
   try {
-    const { email, password, fullName, role = 'job_seeker', country, city } = req.body;
+    const { email, password, fullName, role = 'user', country, city } = req.body;
     const normalizedEmail = normalizeEmail(email);
 
     if (!normalizedEmail) {
@@ -37,10 +37,10 @@ router.post('/signup', async (req, res, next) => {
       email: normalizedEmail,
       passwordHash: await bcrypt.hash(password, 12),
       role,
-      // Job seekers can browse and apply without a manual admin check;
-      // employers and freelancers still need admin approval before their
-      // posts/gigs carry the "verified" trust signal.
-      isVerifiedByAdmin: role === 'job_seeker',
+      // Regular users can browse, apply, and request services without a
+      // manual admin check; suppliers still need admin approval before
+      // their posts/gigs/listings carry the "verified" trust signal.
+      isVerifiedByAdmin: role === 'user',
       otpHash: await hashValue(otp),
       otpExpiresAt: new Date(Date.now() + 10 * 60 * 1000),
       registrationFingerprint: registrationFingerprint(req, normalizedEmail)

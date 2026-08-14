@@ -30,9 +30,9 @@ router.get('/home', async (_req, res, next) => {
     const previousYearFilter = { createdAt: { $gte: previousYearStart, $lt: previousYearEnd } };
 
     const [jobs, gigs, profiles, locations, stats, previousStats, flowStats] = await Promise.all([
-      JobPost.find({ status: 'approved' }).populate('employer', 'email isVerifiedByAdmin hasPriorityBadge').sort({ isFeatured: -1, createdAt: -1 }).limit(30),
-      ServiceGig.find({ status: 'approved' }).populate('seller', 'email isVerifiedByAdmin hasPriorityBadge').sort({ ratingAverage: -1, createdAt: -1 }).limit(30),
-      Profile.find().populate('user', 'role isVerifiedByAdmin isEmailVerified hasPriorityBadge').sort({ ratingAverage: -1, createdAt: -1 }).limit(30),
+      JobPost.find({ status: 'approved' }).populate('employer', 'isVerifiedByAdmin hasPriorityBadge').sort({ isFeatured: -1, createdAt: -1 }).limit(30),
+      ServiceGig.find({ status: 'approved' }).populate('seller', 'isVerifiedByAdmin hasPriorityBadge').sort({ ratingAverage: -1, createdAt: -1 }).limit(30),
+      Profile.find().select('-hiddenContact').populate('user', 'role isVerifiedByAdmin isEmailVerified hasPriorityBadge').sort({ ratingAverage: -1, createdAt: -1 }).limit(30),
       Location.find({ isActive: true }).select('country cities').sort({ country: 1 }),
       Promise.all([
         User.countDocuments({ isBlocked: false }),
