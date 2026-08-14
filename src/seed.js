@@ -28,16 +28,16 @@ const defaultLocations = [
 
 const demoUsers = [
   {
-    email: 'admin@topjobsthejan.com',
+    email: 'admin@liveinaus.com',
     password: 'Admin@12345',
     role: 'admin',
-    fullName: 'TopJobs Admin',
+    fullName: 'LiveInAus Admin',
     country: 'Sri Lanka',
     city: 'Colombo',
     about: 'Marketplace administrator with full moderation access.'
   },
   {
-    email: 'jobseeker@topjobsthejan.com',
+    email: 'jobseeker@liveinaus.com',
     password: 'User@12345',
     role: 'job_seeker',
     fullName: 'Ari Morgan',
@@ -47,7 +47,7 @@ const demoUsers = [
     about: 'Verified job seeker looking for global remote roles.'
   },
   {
-    email: 'employer@topjobsthejan.com',
+    email: 'employer@liveinaus.com',
     password: 'Employer@12345',
     role: 'employer',
     fullName: 'Northstar Labs',
@@ -63,7 +63,7 @@ const demoUsers = [
     }
   },
   {
-    email: 'seller@topjobsthejan.com',
+    email: 'seller@liveinaus.com',
     password: 'Seller@12345',
     role: 'freelancer',
     fullName: 'Maya Chen',
@@ -95,7 +95,8 @@ const demoListings = [
   { vertical: 'marketplace', title: 'Complete starter furniture bundle', category: 'Furniture', price: 350, country: 'Malaysia', city: 'Kuala Lumpur', description: 'Bed frame, desk, and wardrobe in good condition, pickup only.', status: 'approved', details: { condition: 'Used - good' } },
   { vertical: 'food-lifestyle', title: 'Home-style South Asian grocery delivery', category: 'Grocery', price: 0, country: 'Sri Lanka', city: 'Colombo', description: 'Weekly delivery of home-style groceries and spices across the city.', status: 'pending', details: { cuisineType: 'South Asian' } },
   { vertical: 'travel', title: 'Airport pickup and settling-in tour', category: 'Airport transfer', price: 60, country: 'Australia', city: 'Sydney', description: 'Airport pickup plus a half-day orientation tour of your new suburb.', status: 'approved', details: { destination: 'Sydney' } },
-  { vertical: 'media', title: 'Weekly newcomer community newsletter', category: 'News', price: 0, country: 'Canada', city: 'Toronto', description: 'Local news, events, and classifieds curated for newly arrived residents.', status: 'approved', details: { mediaType: 'Newsletter' } }
+  { vertical: 'media', title: 'Weekly newcomer community newsletter', category: 'News', price: 0, country: 'Canada', city: 'Toronto', description: 'Local news, events, and classifieds curated for newly arrived residents.', status: 'approved', details: { mediaType: 'Newsletter' } },
+  { vertical: 'blog-news', title: 'First 90 days in Melbourne: a settlement diary', category: 'Blog post', price: 0, country: 'Australia', city: 'Melbourne', description: 'A first-hand blog series covering visas, housing, and finding work in the first three months.', status: 'approved', details: { topic: 'Settlement stories' } }
 ];
 
 async function seed() {
@@ -225,6 +226,23 @@ async function seed() {
     },
     { new: true, upsert: true, setDefaultsOnInsert: true }
   );
+
+  const demoPlatformReviews = [
+    { rating: 5, feedback: 'Found a remote developer role within two weeks of signing up. The verification step made the whole process feel safe.' },
+    { rating: 5, feedback: 'Posted a vacancy and had qualified, admin-checked applicants the same week. Much less noise than other job boards.' },
+    { rating: 4, feedback: 'Sold three design gigs through the platform so far. Payments and contact details staying protected until checks are done is a nice touch.' },
+    { rating: 5, feedback: 'Used the Accommodation and Migration categories while settling in Melbourne — having everything in one place saved us weeks of searching.' },
+    { rating: 4, feedback: 'Great range of categories for new arrivals. Would love to see more listings in Healthcare, but support has been responsive.' }
+  ];
+  const reviewers = [usersByRole.job_seeker, usersByRole.employer, usersByRole.freelancer];
+  for (const [index, review] of demoPlatformReviews.entries()) {
+    const reviewer = reviewers[index % reviewers.length];
+    await Review.findOneAndUpdate(
+      { reviewer: reviewer._id, feedback: review.feedback },
+      { reviewer: reviewer._id, rating: review.rating, feedback: review.feedback, status: 'approved' },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
+  }
 
   const listingOwners = [usersByRole.job_seeker, usersByRole.employer, usersByRole.freelancer];
   for (const [index, listing] of demoListings.entries()) {
