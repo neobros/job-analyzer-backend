@@ -15,5 +15,6 @@ export const VERTICAL_SLUGS = [
   'marketplace',
   'food-lifestyle',
   'travel',
-  'media'
+  'media',
+  'blog-news'
 ];

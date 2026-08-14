@@ -19,6 +19,7 @@ import adminRoutes from './routes/adminRoutes.js';
 import categoryRoutes from './routes/categoryRoutes.js';
 import locationRoutes from './routes/locationRoutes.js';
 import marketplaceRoutes from './routes/marketplaceRoutes.js';
+import chatRoutes from './routes/chatRoutes.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 
 const app = express();
@@ -69,7 +70,7 @@ app.use(express.json({ limit: '1mb' }));
 app.use('/uploads', express.static(uploadDir));
 
 app.use('/api', apiLimiter);
-app.get('/api/health', (_req, res) => res.json({ ok: true, name: 'TopJobs Thejan API' }));
+app.get('/api/health', (_req, res) => res.json({ ok: true, name: 'LiveInAus API' }));
 app.use('/api/auth', authRoutes);
 app.use('/api/profiles', profileRoutes);
 app.use('/api/jobs', jobRoutes);
@@ -81,6 +82,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/locations', locationRoutes);
 app.use('/api/marketplace', marketplaceRoutes);
+app.use('/api/chat', chatRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
