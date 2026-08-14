@@ -29,6 +29,18 @@ router.post('/', requireAuth, requireVerifiedEmail, async (req, res, next) => {
   }
 });
 
+router.get('/', async (req, res, next) => {
+  try {
+    const reviews = await Review.find({ status: 'approved' })
+      .populate('reviewer', 'email')
+      .sort({ createdAt: -1 })
+      .limit(24);
+    res.json(reviews);
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.get('/user/:userId', async (req, res, next) => {
   try {
     const reviews = await Review.find({ targetUser: req.params.userId, status: 'approved' }).sort({ createdAt: -1 });
