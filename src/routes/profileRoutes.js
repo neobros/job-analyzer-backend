@@ -18,7 +18,6 @@ router.get('/me', requireAuth, async (req, res, next) => {
 router.put('/me', requireAuth, requireVerifiedEmail, upload.fields([{ name: 'cvFile', maxCount: 1 }, { name: 'profilePhoto', maxCount: 1 }]), async (req, res, next) => {
   try {
     const hiddenContact = {
-      phone: req.body.phone || req.body['hiddenContact[phone]'] || req.body.hiddenContact?.phone || '',
       email: req.body.contactEmail || req.body['hiddenContact[email]'] || req.body.hiddenContact?.email || req.user.email,
       website: req.body.website || req.body['hiddenContact[website]'] || req.body.hiddenContact?.website || ''
     };

@@ -13,7 +13,6 @@ const profileSchema = new mongoose.Schema(
     country: String,
     city: String,
     hiddenContact: {
-      phone: String,
       email: String,
       website: String
     },

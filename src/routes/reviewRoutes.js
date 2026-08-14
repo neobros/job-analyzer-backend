@@ -32,7 +32,6 @@ router.post('/', requireAuth, requireVerifiedEmail, async (req, res, next) => {
 router.get('/', async (req, res, next) => {
   try {
     const reviews = await Review.find({ status: 'approved' })
-      .populate('reviewer', 'email')
       .sort({ createdAt: -1 })
       .limit(24);
     res.json(reviews);
