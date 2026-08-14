@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 import AdminMessage from '../models/AdminMessage.js';
 import ServiceGig from '../models/ServiceGig.js';
 import User from '../models/User.js';
-import { requireAuth, requireVerifiedEmail } from '../middleware/auth.js';
+import { requireAuth, requireRole, requireVerifiedEmail } from '../middleware/auth.js';
 import { upload } from '../middleware/upload.js';
 
 const router = express.Router();
@@ -22,7 +22,7 @@ router.get('/', async (req, res, next) => {
     const filter = { status: 'approved' };
     if (q) filter.$text = { $search: q };
     if (category) filter.category = category;
-    const gigs = await ServiceGig.find(filter).populate('seller', 'email isVerifiedByAdmin hasPriorityBadge').sort({ ratingAverage: -1, createdAt: -1 }).limit(100);
+    const gigs = await ServiceGig.find(filter).populate('seller', 'isVerifiedByAdmin hasPriorityBadge').sort({ ratingAverage: -1, createdAt: -1 }).limit(100);
     res.json(gigs.sort(sortBySellerPriority).slice(0, 50));
   } catch (error) {
     next(error);
@@ -36,7 +36,7 @@ router.get('/:id', async (req, res, next) => {
     }
 
     const gig = await ServiceGig.findOne({ _id: req.params.id, status: 'approved' })
-      .populate('seller', 'email isVerifiedByAdmin hasPriorityBadge');
+      .populate('seller', 'isVerifiedByAdmin hasPriorityBadge');
 
     if (!gig) return res.status(404).json({ message: 'Service gig not found' });
     res.json(gig);
@@ -51,9 +51,9 @@ router.post('/:id/contact-request', requireAuth, requireVerifiedEmail, async (re
       return res.status(404).json({ message: 'Service gig not found' });
     }
 
-    const gig = await ServiceGig.findOne({ _id: req.params.id, status: 'approved' }).populate('seller', 'email');
+    const gig = await ServiceGig.findOne({ _id: req.params.id, status: 'approved' });
     if (!gig) return res.status(404).json({ message: 'Service gig not found' });
-    if (String(gig.seller._id) === String(req.user._id)) {
+    if (String(gig.seller) === String(req.user._id)) {
       return res.status(400).json({ message: 'You cannot request contact checking for your own service gig' });
     }
 
@@ -63,7 +63,7 @@ router.post('/:id/contact-request', requireAuth, requireVerifiedEmail, async (re
     const message = await AdminMessage.create({
       admin: admin._id,
       sender: req.user._id,
-      recipient: gig.seller._id,
+      recipient: gig.seller,
       subject: `Service request: ${gig.title}`,
       body: `${req.user.email} requested admin contact checking for "${gig.title}". Keep buyer and seller contact hidden until review is complete.`,
       status: 'open'
@@ -78,7 +78,7 @@ router.post('/:id/contact-request', requireAuth, requireVerifiedEmail, async (re
   }
 });
 
-router.post('/', requireAuth, requireVerifiedEmail, upload.array('portfolioImages', 6), async (req, res, next) => {
+router.post('/', requireAuth, requireVerifiedEmail, requireRole('supplier', 'admin'), upload.array('portfolioImages', 6), async (req, res, next) => {
   try {
     const gig = await ServiceGig.create({
       ...req.body,

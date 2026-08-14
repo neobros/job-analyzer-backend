@@ -9,8 +9,10 @@ import Review from '../models/Review.js';
 import AdminMessage from '../models/AdminMessage.js';
 import Location from '../models/Location.js';
 import Listing from '../models/Listing.js';
+import Appointment from '../models/Appointment.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import { assertStrongPassword, normalizeEmail } from '../utils/auth.js';
+import { sendAppointmentStatusEmail } from '../utils/email.js';
 
 const router = express.Router();
 
@@ -18,17 +20,18 @@ router.use(requireAuth, requireRole('admin'));
 
 router.get('/dashboard', async (_req, res, next) => {
   try {
-    const [users, jobs, applications, gigs, reviews, locations, listings] = await Promise.all([
+    const [users, jobs, applications, gigs, reviews, locations, listings, appointments] = await Promise.all([
       User.countDocuments(),
       JobPost.countDocuments(),
       JobApplication.countDocuments(),
       ServiceGig.countDocuments(),
       Review.countDocuments(),
       Location.countDocuments(),
-      Listing.countDocuments()
+      Listing.countDocuments(),
+      Appointment.countDocuments()
     ]);
 
-    res.json({ users, jobs, applications, gigs, reviews, locations, listings });
+    res.json({ users, jobs, applications, gigs, reviews, locations, listings, appointments });
   } catch (error) {
     next(error);
   }
@@ -45,7 +48,7 @@ router.get('/users', async (_req, res, next) => {
 
 router.post('/users', async (req, res, next) => {
   try {
-    const { email, password, fullName, role = 'job_seeker', country, city, hasPriorityBadge = false } = req.body;
+    const { email, password, fullName, role = 'user', country, city, hasPriorityBadge = false } = req.body;
     const normalizedEmail = normalizeEmail(email);
 
     if (!normalizedEmail) {
@@ -56,7 +59,7 @@ router.post('/users', async (req, res, next) => {
       return res.status(400).json({ message: 'Full name is required' });
     }
 
-    if (!['job_seeker', 'employer', 'freelancer', 'admin'].includes(role)) {
+    if (!['user', 'supplier', 'admin'].includes(role)) {
       return res.status(400).json({ message: 'Invalid role' });
     }
 
@@ -246,6 +249,54 @@ router.delete('/listings/:id', async (req, res, next) => {
     const listing = await Listing.findByIdAndDelete(req.params.id);
     if (!listing) return res.status(404).json({ message: 'Listing not found' });
     res.json({ message: 'Listing deleted' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get('/appointments', async (_req, res, next) => {
+  try {
+    const appointments = await Appointment.find()
+      .populate('listing', 'title vertical')
+      .populate('requester', 'email')
+      .sort({ createdAt: -1 });
+    res.json(appointments);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.patch('/appointments/:id/moderate', async (req, res, next) => {
+  try {
+    const appointment = await Appointment.findByIdAndUpdate(
+      req.params.id,
+      { status: req.body.status, adminNotes: req.body.adminNotes },
+      { new: true }
+    ).populate('listing', 'title').populate('requester', 'email');
+    if (!appointment) return res.status(404).json({ message: 'Appointment not found' });
+
+    if (['approved', 'declined'].includes(appointment.status) && appointment.requester?.email) {
+      sendAppointmentStatusEmail({
+        requesterEmail: appointment.requester.email,
+        listingTitle: appointment.listing?.title || 'your listing',
+        date: appointment.date,
+        preferredTime: appointment.preferredTime,
+        status: appointment.status,
+        adminNotes: appointment.adminNotes
+      }).catch((error) => console.error('Failed to send appointment email:', error.message));
+    }
+
+    res.json(appointment);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.delete('/appointments/:id', async (req, res, next) => {
+  try {
+    const appointment = await Appointment.findByIdAndDelete(req.params.id);
+    if (!appointment) return res.status(404).json({ message: 'Appointment not found' });
+    res.json({ message: 'Appointment deleted' });
   } catch (error) {
     next(error);
   }

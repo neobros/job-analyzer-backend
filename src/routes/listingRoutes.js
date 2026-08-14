@@ -1,7 +1,7 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import Listing from '../models/Listing.js';
-import { requireAuth, requireVerifiedEmail } from '../middleware/auth.js';
+import { requireAuth, requireRole, requireVerifiedEmail } from '../middleware/auth.js';
 import { upload } from '../middleware/upload.js';
 import { VERTICAL_SLUGS } from '../constants/verticals.js';
 
@@ -29,7 +29,7 @@ router.get('/', async (req, res, next) => {
     if (city) filter.city = new RegExp(city, 'i');
     if (country) filter.country = new RegExp(country, 'i');
 
-    const listings = await Listing.find(filter).populate('owner', 'email isVerifiedByAdmin').sort({ createdAt: -1 }).limit(100);
+    const listings = await Listing.find(filter).populate('owner', 'isVerifiedByAdmin').sort({ createdAt: -1 }).limit(100);
     res.json(listings);
   } catch (error) {
     next(error);
@@ -52,7 +52,7 @@ router.get('/:id', async (req, res, next) => {
     }
 
     const listing = await Listing.findOne({ _id: req.params.id, status: 'approved' })
-      .populate('owner', 'email isVerifiedByAdmin');
+      .populate('owner', 'isVerifiedByAdmin');
     if (!listing) return res.status(404).json({ message: 'Listing not found' });
     res.json(listing);
   } catch (error) {
@@ -60,7 +60,7 @@ router.get('/:id', async (req, res, next) => {
   }
 });
 
-router.post('/', requireAuth, requireVerifiedEmail, upload.array('images', 8), async (req, res, next) => {
+router.post('/', requireAuth, requireVerifiedEmail, requireRole('supplier', 'admin'), upload.array('images', 8), async (req, res, next) => {
   try {
     if (!VERTICAL_SLUGS.includes(req.body.vertical)) {
       return res.status(400).json({ message: 'Invalid vertical' });

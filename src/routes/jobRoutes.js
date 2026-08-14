@@ -24,7 +24,7 @@ router.get('/', async (req, res, next) => {
     if (country) filter.country = new RegExp(country, 'i');
     if (skills) filter.skills = { $in: String(skills).split(',').map((skill) => new RegExp(skill.trim(), 'i')) };
 
-    const jobs = await JobPost.find(filter).populate('employer', 'email isVerifiedByAdmin hasPriorityBadge').sort({ isFeatured: -1, createdAt: -1 }).limit(100);
+    const jobs = await JobPost.find(filter).populate('employer', 'isVerifiedByAdmin hasPriorityBadge').sort({ isFeatured: -1, createdAt: -1 }).limit(100);
     res.json(jobs.sort(sortByEmployerPriority).slice(0, 50));
   } catch (error) {
     next(error);
@@ -47,7 +47,7 @@ router.get('/:id', async (req, res, next) => {
     }
 
     const job = await JobPost.findOne({ _id: req.params.id, status: 'approved' })
-      .populate('employer', 'email isVerifiedByAdmin hasPriorityBadge');
+      .populate('employer', 'isVerifiedByAdmin hasPriorityBadge');
     if (!job) return res.status(404).json({ message: 'Job not found' });
     res.json(job);
   } catch (error) {
@@ -55,7 +55,7 @@ router.get('/:id', async (req, res, next) => {
   }
 });
 
-router.post('/', requireAuth, requireVerifiedEmail, requireRole('employer', 'admin'), async (req, res, next) => {
+router.post('/', requireAuth, requireVerifiedEmail, requireRole('supplier', 'admin'), async (req, res, next) => {
   try {
     const job = await JobPost.create({
       ...req.body,

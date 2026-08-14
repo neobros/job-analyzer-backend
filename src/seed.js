@@ -28,6 +28,7 @@ const defaultLocations = [
 
 const demoUsers = [
   {
+    key: 'admin',
     email: 'admin@liveinaus.com',
     password: 'Admin@12345',
     role: 'admin',
@@ -37,24 +38,26 @@ const demoUsers = [
     about: 'Marketplace administrator with full moderation access.'
   },
   {
+    key: 'user',
     email: 'jobseeker@liveinaus.com',
     password: 'User@12345',
-    role: 'job_seeker',
+    role: 'user',
     fullName: 'Ari Morgan',
     country: 'Australia',
     city: 'Melbourne',
     skills: ['React', 'Node.js', 'MongoDB'],
-    about: 'Verified job seeker looking for global remote roles.'
+    about: 'Verified user looking for global remote roles and services.'
   },
   {
+    key: 'employerSupplier',
     email: 'employer@liveinaus.com',
     password: 'Employer@12345',
-    role: 'employer',
+    role: 'supplier',
     fullName: 'Northstar Labs',
     country: 'Canada',
     city: 'Toronto',
     hasPriorityBadge: true,
-    about: 'Verified employer posting worldwide vacancies.',
+    about: 'Verified supplier posting worldwide vacancies.',
     company: {
       name: 'Northstar Labs',
       website: 'https://northstarlabs.example',
@@ -63,15 +66,16 @@ const demoUsers = [
     }
   },
   {
+    key: 'freelancerSupplier',
     email: 'seller@liveinaus.com',
     password: 'Seller@12345',
-    role: 'freelancer',
+    role: 'supplier',
     fullName: 'Maya Chen',
     country: 'Malaysia',
     city: 'Kuala Lumpur',
     skills: ['UI Design', 'Figma', 'Brand Systems'],
     hasPriorityBadge: true,
-    about: 'Verified seller offering design and freelance services.'
+    about: 'Verified supplier offering design and freelance services.'
   }
 ];
 
@@ -82,7 +86,8 @@ const demoListings = [
   { vertical: 'accommodation', title: '2-bedroom apartment, short-stay ready', category: 'Short-stay rental', price: 145, country: 'Canada', city: 'Toronto', description: 'Fully furnished 2-bedroom apartment available for stays from 2 weeks, ideal while house-hunting.', status: 'pending', details: { bedrooms: 2, furnished: true } },
   { vertical: 'education', title: 'IELTS preparation course - evening classes', category: 'Language course', price: 320, country: 'United Kingdom', city: 'Manchester', description: 'Eight-week evening IELTS preparation course with small class sizes and mock exams.', status: 'approved', details: { studyLevel: 'Intermediate to advanced' } },
   { vertical: 'education', title: 'Credential recognition consultation', category: 'Counselling', price: 90, country: 'Australia', city: 'Sydney', description: 'One-on-one session to map your overseas qualifications against local recognition pathways.', status: 'approved', details: { studyLevel: 'All levels' } },
-  { vertical: 'migration', title: 'Skilled visa consultation - registered agent', category: 'Visa consultation', price: 150, country: 'Australia', city: 'Melbourne', description: 'Initial consultation with a registered migration agent covering skilled visa pathways.', status: 'approved', details: {} },
+  { vertical: 'migration', title: 'Skilled visa consultation - registered migration lawyer', category: 'Lawyer', price: 150, country: 'Australia', city: 'Melbourne', description: 'Initial consultation with a registered migration lawyer covering skilled visa pathways.', status: 'approved', details: {} },
+  { vertical: 'migration', title: 'Panel doctor - visa medical examination', category: 'Doctor', price: 220, country: 'Australia', city: 'Sydney', description: 'Approved panel doctor conducting visa medical examinations for skilled and family visas.', status: 'approved', details: {} },
   { vertical: 'real-estate', title: 'Modern 3-bedroom family home', category: 'For sale', price: 620000, country: 'Australia', city: 'Brisbane', description: 'Renovated 3-bedroom home close to schools and public transport, move-in ready.', status: 'approved', details: { bedrooms: 3, listingType: 'For sale' } },
   { vertical: 'real-estate', title: 'City-view 1-bedroom unit for rent', category: 'For rent', price: 480, country: 'Singapore', city: 'Singapore', description: 'Bright 1-bedroom unit in the CBD with gym and pool access.', status: 'pending', details: { bedrooms: 1, listingType: 'For rent' } },
   { vertical: 'cars-transport', title: '2019 Toyota Corolla - low mileage', category: 'Used car', price: 16500, country: 'Canada', city: 'Vancouver', description: 'Single-owner Corolla, full service history, ready for a quick sale.', status: 'approved', details: { make: 'Toyota', model: 'Corolla', mileage: 42000 } },
@@ -149,13 +154,13 @@ async function seed() {
       { new: true, upsert: true, setDefaultsOnInsert: true }
     );
 
-    usersByRole[demoUser.role] = user;
+    usersByRole[demoUser.key] = user;
   }
 
   const pendingJob = await JobPost.findOneAndUpdate(
-    { title: 'Senior React Engineer', employer: usersByRole.employer._id },
+    { title: 'Senior React Engineer', employer: usersByRole.employerSupplier._id },
     {
-      employer: usersByRole.employer._id,
+      employer: usersByRole.employerSupplier._id,
       title: 'Senior React Engineer',
       category: 'IT',
       salary: '$85,000 - $120,000',
@@ -171,9 +176,9 @@ async function seed() {
   );
 
   await JobPost.findOneAndUpdate(
-    { title: 'Customer Support Specialist', employer: usersByRole.employer._id },
+    { title: 'Customer Support Specialist', employer: usersByRole.employerSupplier._id },
     {
-      employer: usersByRole.employer._id,
+      employer: usersByRole.employerSupplier._id,
       title: 'Customer Support Specialist',
       category: 'Customer Support',
       salary: '$2,500 - $3,200',
@@ -189,9 +194,9 @@ async function seed() {
   );
 
   const gig = await ServiceGig.findOneAndUpdate(
-    { title: 'I will design a modern product dashboard', seller: usersByRole.freelancer._id },
+    { title: 'I will design a modern product dashboard', seller: usersByRole.freelancerSupplier._id },
     {
-      seller: usersByRole.freelancer._id,
+      seller: usersByRole.freelancerSupplier._id,
       title: 'I will design a modern product dashboard',
       category: 'Design',
       price: 180,
@@ -204,10 +209,10 @@ async function seed() {
   );
 
   await JobApplication.findOneAndUpdate(
-    { job: pendingJob._id, applicant: usersByRole.job_seeker._id },
+    { job: pendingJob._id, applicant: usersByRole.user._id },
     {
       job: pendingJob._id,
-      applicant: usersByRole.job_seeker._id,
+      applicant: usersByRole.user._id,
       coverLetter: 'I have seven years of experience building React and Node.js products.',
       status: 'submitted'
     },
@@ -215,10 +220,10 @@ async function seed() {
   );
 
   await Review.findOneAndUpdate(
-    { reviewer: usersByRole.employer._id, targetUser: usersByRole.freelancer._id, serviceGig: gig._id },
+    { reviewer: usersByRole.employerSupplier._id, targetUser: usersByRole.freelancerSupplier._id, serviceGig: gig._id },
     {
-      reviewer: usersByRole.employer._id,
-      targetUser: usersByRole.freelancer._id,
+      reviewer: usersByRole.employerSupplier._id,
+      targetUser: usersByRole.freelancerSupplier._id,
       serviceGig: gig._id,
       rating: 5,
       feedback: 'Strong design work, but this review still needs admin moderation.',
@@ -234,7 +239,7 @@ async function seed() {
     { rating: 5, feedback: 'Used the Accommodation and Migration categories while settling in Melbourne — having everything in one place saved us weeks of searching.' },
     { rating: 4, feedback: 'Great range of categories for new arrivals. Would love to see more listings in Healthcare, but support has been responsive.' }
   ];
-  const reviewers = [usersByRole.job_seeker, usersByRole.employer, usersByRole.freelancer];
+  const reviewers = [usersByRole.user, usersByRole.employerSupplier, usersByRole.freelancerSupplier];
   for (const [index, review] of demoPlatformReviews.entries()) {
     const reviewer = reviewers[index % reviewers.length];
     await Review.findOneAndUpdate(
@@ -244,7 +249,7 @@ async function seed() {
     );
   }
 
-  const listingOwners = [usersByRole.job_seeker, usersByRole.employer, usersByRole.freelancer];
+  const listingOwners = [usersByRole.employerSupplier, usersByRole.freelancerSupplier];
   for (const [index, listing] of demoListings.entries()) {
     const owner = listingOwners[index % listingOwners.length];
     await Listing.findOneAndUpdate(
