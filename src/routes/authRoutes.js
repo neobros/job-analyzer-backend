@@ -157,16 +157,20 @@ router.post('/forgot-password', async (req, res, next) => {
   try {
     const email = normalizeEmail(req.body.email);
     const user = await User.findOne({ email });
+    let otp;
 
     if (user) {
-      const otp = createOtp();
+      otp = createOtp();
       user.passwordResetHash = await hashValue(otp);
       user.passwordResetExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
       await user.save();
       await sendOtpEmail(email, otp);
     }
 
-    res.json({ message: 'If the account exists, reset instructions were sent' });
+    res.json({
+      message: 'If the account exists, reset instructions were sent',
+      devOtp: process.env.NODE_ENV === 'production' ? undefined : otp
+    });
   } catch (error) {
     next(error);
   }
