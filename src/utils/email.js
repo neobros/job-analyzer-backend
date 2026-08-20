@@ -21,13 +21,25 @@ async function sendMail({ to, subject, html, attachments }) {
     return false;
   }
 
-  await mailer.sendMail({ from: `"LiveInAus" <${process.env.GMAIL_USER}>`, to, subject, html, attachments });
-  return true;
+  try {
+    const info = await mailer.sendMail({ from: `"LiveInAus" <${process.env.GMAIL_USER}>`, to, subject, html, attachments });
+    console.log(`[email sent] To: ${to} | Subject: ${subject} | id: ${info.messageId}`);
+    return true;
+  } catch (error) {
+    console.error(`[email failed] To: ${to} | Subject: ${subject} |`, error.message);
+    return false;
+  }
 }
 
 export async function sendOtpEmail(email, otp) {
   console.log(`OTP for ${email}: ${otp}`);
-  return true;
+  return sendMail({
+    to: email,
+    subject: `Your LiveInAus verification code: ${otp}`,
+    html: `<p>Your LiveInAus verification code is:</p>
+           <p style="font-size:28px;font-weight:800;letter-spacing:4px;">${otp}</p>
+           <p>This code expires in 10 minutes. If you didn't request this, you can ignore this email.</p>`
+  });
 }
 
 function formatIcsDate(date) {
